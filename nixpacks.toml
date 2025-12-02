@@ -1,0 +1,13 @@
+# Nixpacks configuration for Bambu Web Slicer
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm"]
+
+[phases.install]
+cmds = ["npm install", "cd bambu-web-app && npm ci"]
+
+[phases.build]
+cmds = ["cd bambu-web-app && npm run build"]
+
+[start]
+cmd = "npm start"
+
