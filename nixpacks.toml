@@ -1,0 +1,15 @@
+# Nixpacks configuration for Bambu Web Slicer
+# Force Node.js provider
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm ci --include=dev"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm start"
