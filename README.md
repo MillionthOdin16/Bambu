@@ -58,12 +58,12 @@ npm run preview
 
 ### Supported Printers
 
-- Bambu Lab X1 Carbon
-- Bambu Lab X1
-- Bambu Lab P1P
-- Bambu Lab P1S
-- Bambu Lab A1
-- Bambu Lab A1 mini
+- **Bambu Lab A1 mini** (default) - 180×180×180mm build volume
+- Bambu Lab A1 - 256×256×256mm build volume
+- Bambu Lab P1S - 256×256×256mm build volume
+- Bambu Lab P1P - 256×256×256mm build volume
+- Bambu Lab X1 Carbon - 256×256×256mm build volume
+- Bambu Lab X1 - 256×256×256mm build volume
 
 ### Technical Notes
 

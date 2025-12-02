@@ -1,5 +1,8 @@
 import JSZip from 'jszip';
 
+// Coordinate precision for 3MF export (decimal places)
+const COORDINATE_PRECISION = 6;
+
 /**
  * Generate a 3MF file for Bambu Lab printers
  * Bambu printers use an extended 3MF format with additional metadata
@@ -71,29 +74,23 @@ function generateModelXML(geometry) {
   
   // Build vertex list
   let vertexList = '';
-  const uniqueVertices = [];
   const vertexMap = new Map();
   
   for (let i = 0; i < vertices.length; i += 3) {
-    const key = `${vertices[i].toFixed(6)},${vertices[i + 1].toFixed(6)},${vertices[i + 2].toFixed(6)}`;
+    const key = `${vertices[i].toFixed(COORDINATE_PRECISION)},${vertices[i + 1].toFixed(COORDINATE_PRECISION)},${vertices[i + 2].toFixed(COORDINATE_PRECISION)}`;
     
     if (!vertexMap.has(key)) {
-      vertexMap.set(key, uniqueVertices.length);
-      uniqueVertices.push({
-        x: vertices[i],
-        y: vertices[i + 1],
-        z: vertices[i + 2]
-      });
-      vertexList += `        <vertex x="${vertices[i].toFixed(6)}" y="${vertices[i + 1].toFixed(6)}" z="${vertices[i + 2].toFixed(6)}" />\n`;
+      vertexMap.set(key, vertexMap.size);
+      vertexList += `        <vertex x="${vertices[i].toFixed(COORDINATE_PRECISION)}" y="${vertices[i + 1].toFixed(COORDINATE_PRECISION)}" z="${vertices[i + 2].toFixed(COORDINATE_PRECISION)}" />\n`;
     }
   }
   
   // Build triangle list
   let triangleList = '';
   for (let i = 0; i < vertices.length; i += 9) {
-    const key1 = `${vertices[i].toFixed(6)},${vertices[i + 1].toFixed(6)},${vertices[i + 2].toFixed(6)}`;
-    const key2 = `${vertices[i + 3].toFixed(6)},${vertices[i + 4].toFixed(6)},${vertices[i + 5].toFixed(6)}`;
-    const key3 = `${vertices[i + 6].toFixed(6)},${vertices[i + 7].toFixed(6)},${vertices[i + 8].toFixed(6)}`;
+    const key1 = `${vertices[i].toFixed(COORDINATE_PRECISION)},${vertices[i + 1].toFixed(COORDINATE_PRECISION)},${vertices[i + 2].toFixed(COORDINATE_PRECISION)}`;
+    const key2 = `${vertices[i + 3].toFixed(COORDINATE_PRECISION)},${vertices[i + 4].toFixed(COORDINATE_PRECISION)},${vertices[i + 5].toFixed(COORDINATE_PRECISION)}`;
+    const key3 = `${vertices[i + 6].toFixed(COORDINATE_PRECISION)},${vertices[i + 7].toFixed(COORDINATE_PRECISION)},${vertices[i + 8].toFixed(COORDINATE_PRECISION)}`;
     
     const v1 = vertexMap.get(key1);
     const v2 = vertexMap.get(key2);

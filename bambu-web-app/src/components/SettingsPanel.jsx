@@ -3,12 +3,12 @@ import { defaultSettings } from '../utils/slicer';
 import './SettingsPanel.css';
 
 const PRINTER_PROFILES = [
+  { id: 'bambu_a1_mini', name: 'Bambu Lab A1 mini', bedX: 180, bedY: 180, bedZ: 180 },
+  { id: 'bambu_a1', name: 'Bambu Lab A1', bedX: 256, bedY: 256, bedZ: 256 },
+  { id: 'bambu_p1s', name: 'Bambu Lab P1S', bedX: 256, bedY: 256, bedZ: 256 },
+  { id: 'bambu_p1p', name: 'Bambu Lab P1P', bedX: 256, bedY: 256, bedZ: 256 },
   { id: 'bambu_x1c', name: 'Bambu Lab X1 Carbon', bedX: 256, bedY: 256, bedZ: 256 },
   { id: 'bambu_x1', name: 'Bambu Lab X1', bedX: 256, bedY: 256, bedZ: 256 },
-  { id: 'bambu_p1p', name: 'Bambu Lab P1P', bedX: 256, bedY: 256, bedZ: 256 },
-  { id: 'bambu_p1s', name: 'Bambu Lab P1S', bedX: 256, bedY: 256, bedZ: 256 },
-  { id: 'bambu_a1', name: 'Bambu Lab A1', bedX: 256, bedY: 256, bedZ: 256 },
-  { id: 'bambu_a1_mini', name: 'Bambu Lab A1 mini', bedX: 180, bedY: 180, bedZ: 180 },
 ];
 
 const INFILL_PATTERNS = [

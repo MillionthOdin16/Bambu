@@ -4,7 +4,15 @@
  * integrate with CuraEngine WASM or a server-side slicer
  */
 
-// Default slicer settings
+// Constants for better code readability
+const PLA_DENSITY_G_PER_CM3 = 1.24;
+const LINE_CONNECTION_THRESHOLD_MULTIPLIER = 2;
+const INFILL_ANGLE_EVEN_LAYERS = 45;
+const INFILL_ANGLE_ODD_LAYERS = -45;
+const INFILL_SAMPLING_STEP = 0.02;
+const COORDINATE_PRECISION = 6;
+
+// Default slicer settings - configured for Bambu Lab A1 mini
 export const defaultSettings = {
   // Print quality
   layerHeight: 0.2,
@@ -46,17 +54,17 @@ export const defaultSettings = {
   retractionDistance: 0.8,
   retractionSpeed: 35,
   
-  // Bed size (Bambu Lab X1/P1 series)
-  bedSizeX: 256,
-  bedSizeY: 256,
-  bedSizeZ: 256,
+  // Bed size (Bambu Lab A1 mini - default printer)
+  bedSizeX: 180,
+  bedSizeY: 180,
+  bedSizeZ: 180,
   
   // Filament
   filamentDiameter: 1.75,
   flowRate: 100,
   
   // Printer type
-  printerProfile: 'bambu_x1c'
+  printerProfile: 'bambu_a1_mini'
 };
 
 /**
@@ -227,7 +235,7 @@ function generatePerimeter(intersections, bounds, settings) {
         const d3 = distance(firstPoint, seg[0]);
         const d4 = distance(firstPoint, seg[1]);
         
-        const threshold = settings.lineWidth * 2;
+        const threshold = settings.lineWidth * LINE_CONNECTION_THRESHOLD_MULTIPLIER;
         
         if (d1 < threshold) {
           path.push(seg[1]);
@@ -278,7 +286,7 @@ function generateInfill(perimeter, bounds, settings, layerIndex) {
   
   // Generate grid infill
   // Alternate direction each layer for better strength
-  const angle = layerIndex % 2 === 0 ? 45 : -45;
+  const angle = layerIndex % 2 === 0 ? INFILL_ANGLE_EVEN_LAYERS : INFILL_ANGLE_ODD_LAYERS;
   const radians = angle * Math.PI / 180;
   
   const minX = bounds.min.x;
@@ -297,12 +305,12 @@ function generateInfill(perimeter, bounds, settings, layerIndex) {
     const path = [];
     
     // Sample points along the line
-    for (let t = 0; t <= 1; t += 0.02) {
+    for (let t = 0; t <= 1; t += INFILL_SAMPLING_STEP) {
       const x = minX + t * (maxX - minX);
       const y = minY + offset + (x - minX) * Math.tan(radians);
       
       if (y >= minY && y <= maxY && isInsidePerimeter({ x, y }, perimeter)) {
-        if (path.length === 0 || distance(path[path.length - 1], { x, y }) < spacing * 2) {
+        if (path.length === 0 || distance(path[path.length - 1], { x, y }) < spacing * LINE_CONNECTION_THRESHOLD_MULTIPLIER) {
           path.push({ x, y });
         } else {
           if (path.length > 1) {
@@ -523,7 +531,7 @@ export async function sliceModel(geometry, settings) {
       estimatedTime: formatTime(estimatedTime),
       estimatedTimeSeconds: estimatedTime,
       filamentUsed: (filamentUsed / 1000).toFixed(2), // in meters
-      filamentWeight: (filamentUsed * Math.PI * Math.pow(mergedSettings.filamentDiameter / 2, 2) * 1.24 / 1000).toFixed(1) // in grams, assuming PLA density
+      filamentWeight: (filamentUsed * Math.PI * Math.pow(mergedSettings.filamentDiameter / 2, 2) * PLA_DENSITY_G_PER_CM3 / 1000).toFixed(1) // in grams
     }
   };
 }

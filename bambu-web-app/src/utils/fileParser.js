@@ -1,6 +1,10 @@
 /**
  * Parse STL file (binary or ASCII) and return geometry data
  */
+
+// Binary STL size tolerance - accounts for possible padding or minor format variations
+const BINARY_STL_SIZE_TOLERANCE = 1;
+
 export async function parseSTL(file) {
   const arrayBuffer = await file.arrayBuffer();
   const dataView = new DataView(arrayBuffer);
@@ -32,7 +36,7 @@ function checkIfBinarySTL(arrayBuffer) {
     const expectedSize = 84 + triangleCount * 50;
     
     // If size matches binary format, it's binary
-    if (Math.abs(arrayBuffer.byteLength - expectedSize) <= 1) {
+    if (Math.abs(arrayBuffer.byteLength - expectedSize) <= BINARY_STL_SIZE_TOLERANCE) {
       return true;
     }
   }
