@@ -7,23 +7,24 @@ import { sliceFile } from './api/slicerApi';
 function App() {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [fileBlob, setFileBlob] = useState(null);
+  const [modelSize, setModelSize] = useState(null);
   const [settings, setSettings] = useState({
-    printer: 'bambu_x1c',
+    printer: 'bambu_a1_mini',
     layerHeight: 0.2,
     infillDensity: 15,
     wallCount: 2,
     topLayers: 4,
-    bottomLayers: 4,
+    bottomLayers: 3,
     infillPattern: 'grid',
     enableSupport: false,
-    nozzleTemp: 210,
-    bedTemp: 60,
+    nozzleTemp: 220,
+    bedTemp: 65,
     nozzleDiameter: 0.4,
     filamentType: 'PLA',
-    outerWallSpeed: 60,
-    innerWallSpeed: 150,
-    infillSpeed: 150,
-    topSpeed: 100,
+    outerWallSpeed: 100,
+    innerWallSpeed: 250,
+    infillSpeed: 250,
+    topSpeed: 150,
     flowRate: 1.0,
     skirt: 1,
     brimWidth: 0
@@ -35,8 +36,13 @@ function App() {
   const handleFileUpload = (file, blob) => {
     setUploadedFile(file);
     setFileBlob(blob);
+    setModelSize(null);
     setSliceResult(null);
     setError(null);
+  };
+
+  const handleModelLoad = (modelData) => {
+    setModelSize(modelData);
   };
 
   const handleSlice = async () => {
@@ -138,7 +144,11 @@ function App() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 3D Preview
               </h2>
-              <STLViewer fileBlob={fileBlob} fileName={uploadedFile.originalName} />
+              <STLViewer
+                fileBlob={fileBlob}
+                fileName={uploadedFile.originalName}
+                onModelLoad={handleModelLoad}
+              />
             </div>
 
             {/* Settings Section */}
@@ -146,7 +156,11 @@ function App() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Slicer Settings
               </h2>
-              <SlicerSettings settings={settings} onSettingsChange={setSettings} />
+              <SlicerSettings
+                settings={settings}
+                onSettingsChange={setSettings}
+                modelSize={modelSize}
+              />
             </div>
 
             {/* Slice Button */}

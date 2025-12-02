@@ -3,10 +3,11 @@ import * as THREE from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-function STLViewer({ fileBlob, fileName }) {
+function STLViewer({ fileBlob, fileName, onModelLoad }) {
   const mountRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [modelInfo, setModelInfo] = useState(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
@@ -77,6 +78,25 @@ function STLViewer({ fileBlob, fileName }) {
         geometry.boundingBox.getCenter(center);
         geometry.translate(-center.x, -center.y, -center.z);
 
+        // Calculate model dimensions
+        geometry.computeBoundingBox();
+        const size = new THREE.Vector3();
+        geometry.boundingBox.getSize(size);
+
+        const modelData = {
+          x: size.x,
+          y: size.y,
+          z: size.z,
+          volume: (size.x * size.y * size.z) / 1000 // Convert to cm³
+        };
+
+        setModelInfo(modelData);
+
+        // Call parent callback with model dimensions
+        if (onModelLoad) {
+          onModelLoad(modelData);
+        }
+
         // Create material and mesh
         const material = new THREE.MeshPhongMaterial({
           color: 0x00ae42,
@@ -91,8 +111,6 @@ function STLViewer({ fileBlob, fileName }) {
 
         // Auto-fit camera
         const boundingBox = geometry.boundingBox;
-        const size = new THREE.Vector3();
-        boundingBox.getSize(size);
         const maxDim = Math.max(size.x, size.y, size.z);
         const fov = camera.fov * (Math.PI / 180);
         let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
@@ -166,11 +184,13 @@ function STLViewer({ fileBlob, fileName }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between text-sm text-gray-600">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-gray-600">
         <span className="font-medium">{fileName}</span>
-        <span className="text-xs">
-          Use mouse/touch to rotate, zoom, and pan
-        </span>
+        {modelInfo && (
+          <div className="text-xs bg-gray-100 px-3 py-1 rounded-full">
+            📏 {modelInfo.x.toFixed(1)} × {modelInfo.y.toFixed(1)} × {modelInfo.z.toFixed(1)} mm
+          </div>
+        )}
       </div>
 
       <div className="viewer-container relative" ref={mountRef}>

@@ -1,15 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { printPresets, getPrinterConfig, getFilamentProfile, getAllPrinters } from '../utils/printerConfigs';
 
-function SlicerSettings({ settings, onSettingsChange }) {
+function SlicerSettings({ settings, onSettingsChange, modelSize }) {
   const [expandedSections, setExpandedSections] = useState({
+    presets: true,
     printer: true,
-    quality: true,
+    quality: false,
     strength: false,
     speed: false,
     temperature: false,
     support: false,
     advanced: false
   });
+
+  const [printerConfig, setPrinterConfig] = useState(null);
+  const [showTips, setShowTips] = useState(true);
+
+  useEffect(() => {
+    const config = getPrinterConfig(settings.printer);
+    setPrinterConfig(config);
+  }, [settings.printer]);
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
@@ -25,20 +35,77 @@ function SlicerSettings({ settings, onSettingsChange }) {
     });
   };
 
-  const printers = [
-    { id: 'bambu_x1c', name: 'X1 Carbon' },
-    { id: 'bambu_x1', name: 'X1' },
-    { id: 'bambu_p1p', name: 'P1P' },
-    { id: 'bambu_p1s', name: 'P1S' },
-    { id: 'bambu_a1', name: 'A1' },
-    { id: 'bambu_a1_mini', name: 'A1 Mini' }
-  ];
+  const handlePrinterChange = (printerId) => {
+    const config = getPrinterConfig(printerId);
+    // Apply default settings for this printer
+    onSettingsChange({
+      ...settings,
+      printer: printerId,
+      ...config.defaultSettings
+    });
+  };
 
-  const filamentTypes = ['PLA', 'PETG', 'ABS', 'TPU', 'ASA', 'Nylon'];
+  const handleFilamentChange = (filamentType) => {
+    const profile = getFilamentProfile(settings.printer, filamentType);
+    if (profile) {
+      onSettingsChange({
+        ...settings,
+        filamentType,
+        nozzleTemp: profile.nozzle,
+        bedTemp: profile.bed
+      });
+    } else {
+      handleChange('filamentType', filamentType);
+    }
+  };
+
+  const applyPreset = (presetKey) => {
+    const preset = printPresets[presetKey];
+    if (preset) {
+      onSettingsChange({
+        ...settings,
+        ...preset.settings
+      });
+    }
+  };
+
+  const printers = getAllPrinters();
+  const filamentTypes = printerConfig
+    ? Object.keys(printerConfig.filamentProfiles)
+    : ['PLA', 'PETG', 'ABS', 'TPU', 'ASA', 'PA', 'PC'];
   const infillPatterns = ['grid', 'lines', 'triangles', 'cubic', 'gyroid', 'honeycomb'];
 
   return (
     <div className="space-y-4">
+      {/* Quick Presets */}
+      <SettingsSection
+        title="Quick Presets"
+        icon="⚡"
+        isExpanded={expandedSections.presets}
+        onToggle={() => toggleSection('presets')}
+      >
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {Object.entries(printPresets).map(([key, preset]) => (
+            <button
+              key={key}
+              onClick={() => applyPreset(key)}
+              className="flex flex-col items-center justify-center p-3 border-2 border-gray-200 rounded-lg hover:border-bambu-primary hover:bg-green-50 transition-all"
+            >
+              <span className="text-2xl mb-1">{preset.icon}</span>
+              <span className="text-xs font-semibold text-gray-900">{preset.name}</span>
+              <span className="text-xs text-gray-500 text-center mt-1 hidden sm:block">
+                {preset.description}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-xs text-blue-800">
+            💡 <strong>Tip:</strong> Start with a preset, then fine-tune settings below
+          </p>
+        </div>
+      </SettingsSection>
+
       {/* Printer Selection */}
       <SettingsSection
         title="Printer"
@@ -46,12 +113,73 @@ function SlicerSettings({ settings, onSettingsChange }) {
         isExpanded={expandedSections.printer}
         onToggle={() => toggleSection('printer')}
       >
-        <SelectField
-          label="Printer Model"
-          value={settings.printer}
-          onChange={(e) => handleChange('printer', e.target.value)}
-          options={printers.map(p => ({ value: p.id, label: p.name }))}
-        />
+        <div className="space-y-3">
+          <SelectField
+            label="Printer Model"
+            value={settings.printer}
+            onChange={(e) => handlePrinterChange(e.target.value)}
+            options={printers.map(p => ({
+              value: p.id,
+              label: `${p.displayName} (${p.buildVolume})`
+            }))}
+          />
+
+          {printerConfig && (
+            <div className="p-3 bg-gray-50 rounded-lg text-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-gray-600">Build Volume:</span>
+                  <div className="font-semibold">
+                    {printerConfig.buildVolume.x}×{printerConfig.buildVolume.y}×{printerConfig.buildVolume.z}mm
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-600">Max Speed:</span>
+                  <div className="font-semibold">{printerConfig.maxSpeed}mm/s</div>
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {printerConfig.features.multiColor && (
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Multi-Color</span>
+                )}
+                {printerConfig.features.enclosure && (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Enclosed</span>
+                )}
+                {printerConfig.features.camera && (
+                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Camera</span>
+                )}
+                {printerConfig.features.lidar && (
+                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">LiDAR</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* A1 Mini Specific Tips */}
+          {settings.printer === 'bambu_a1_mini' && showTips && printerConfig?.tips && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="text-sm font-semibold text-yellow-900">📌 A1 Mini Tips</h4>
+                <button
+                  onClick={() => setShowTips(false)}
+                  className="text-yellow-600 hover:text-yellow-800 text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+              <ul className="text-xs text-yellow-800 space-y-1">
+                {printerConfig.tips.map((tip, idx) => (
+                  <li key={idx}>• {tip}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Model Size Warning */}
+          {modelSize && printerConfig && (
+            <ModelSizeCheck modelSize={modelSize} printerConfig={printerConfig} />
+          )}
+        </div>
       </SettingsSection>
 
       {/* Quality Settings */}
@@ -66,11 +194,26 @@ function SlicerSettings({ settings, onSettingsChange }) {
           value={settings.layerHeight}
           onChange={(value) => handleChange('layerHeight', value)}
           min={0.08}
-          max={0.28}
+          max={0.32}
           step={0.04}
           unit="mm"
           description="Lower = better quality, slower print"
         />
+        <div className="flex gap-2 mt-2">
+          {[0.08, 0.12, 0.16, 0.2, 0.28].map(height => (
+            <button
+              key={height}
+              onClick={() => handleChange('layerHeight', height)}
+              className={`flex-1 text-xs py-2 px-1 rounded border-2 transition-all ${
+                settings.layerHeight === height
+                  ? 'border-bambu-primary bg-green-50 font-semibold'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {height}mm
+            </button>
+          ))}
+        </div>
       </SettingsSection>
 
       {/* Strength Settings */}
@@ -135,12 +278,17 @@ function SlicerSettings({ settings, onSettingsChange }) {
         isExpanded={expandedSections.speed}
         onToggle={() => toggleSection('speed')}
       >
+        {printerConfig && (
+          <div className="mb-3 p-2 bg-blue-50 rounded text-xs text-blue-800">
+            Recommended max speed for {printerConfig.displayName}: {printerConfig.recommendedSpeed}mm/s
+          </div>
+        )}
         <SliderField
           label="Outer Wall Speed"
           value={settings.outerWallSpeed}
           onChange={(value) => handleChange('outerWallSpeed', value)}
           min={20}
-          max={200}
+          max={printerConfig?.maxSpeed || 300}
           step={10}
           unit="mm/s"
         />
@@ -149,7 +297,7 @@ function SlicerSettings({ settings, onSettingsChange }) {
           value={settings.innerWallSpeed}
           onChange={(value) => handleChange('innerWallSpeed', value)}
           min={50}
-          max={300}
+          max={printerConfig?.maxSpeed || 300}
           step={10}
           unit="mm/s"
         />
@@ -158,7 +306,7 @@ function SlicerSettings({ settings, onSettingsChange }) {
           value={settings.infillSpeed}
           onChange={(value) => handleChange('infillSpeed', value)}
           min={50}
-          max={300}
+          max={printerConfig?.maxSpeed || 300}
           step={10}
           unit="mm/s"
         />
@@ -183,16 +331,22 @@ function SlicerSettings({ settings, onSettingsChange }) {
         <SelectField
           label="Filament Type"
           value={settings.filamentType}
-          onChange={(e) => handleChange('filamentType', e.target.value)}
+          onChange={(e) => handleFilamentChange(e.target.value)}
           options={filamentTypes.map(f => ({ value: f, label: f }))}
         />
+        {printerConfig && getFilamentProfile(settings.printer, settings.filamentType)?.requiresEnclosure && !printerConfig.features.enclosure && (
+          <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-800">
+            ⚠️ <strong>Warning:</strong> {settings.filamentType} typically requires an enclosure.
+            Your {printerConfig.displayName} doesn't have one built-in. Consider adding aftermarket enclosure.
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-4">
           <SliderField
             label="Nozzle Temp"
             value={settings.nozzleTemp}
             onChange={(value) => handleChange('nozzleTemp', value)}
             min={180}
-            max={280}
+            max={300}
             step={5}
             unit="°C"
           />
@@ -260,7 +414,61 @@ function SlicerSettings({ settings, onSettingsChange }) {
             unit="mm"
           />
         </div>
+        <SliderField
+          label="Nozzle Diameter"
+          value={settings.nozzleDiameter}
+          onChange={(value) => handleChange('nozzleDiameter', value)}
+          min={0.2}
+          max={0.8}
+          step={0.2}
+          unit="mm"
+          description="Match your installed nozzle size"
+        />
       </SettingsSection>
+    </div>
+  );
+}
+
+// Model Size Check Component
+function ModelSizeCheck({ modelSize, printerConfig }) {
+  const { buildVolume } = printerConfig;
+  const oversized = {
+    x: modelSize.x > buildVolume.x,
+    y: modelSize.y > buildVolume.y,
+    z: modelSize.z > buildVolume.z
+  };
+
+  const isOversized = oversized.x || oversized.y || oversized.z;
+
+  if (!isOversized) {
+    return (
+      <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-800">
+        ✅ Model fits build volume ({modelSize.x.toFixed(1)}×{modelSize.y.toFixed(1)}×{modelSize.z.toFixed(1)}mm)
+      </div>
+    );
+  }
+
+  const scale = Math.min(
+    buildVolume.x / modelSize.x,
+    buildVolume.y / modelSize.y,
+    buildVolume.z / modelSize.z
+  );
+
+  return (
+    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+      <div className="text-sm font-semibold text-red-900 mb-1">
+        ⚠️ Model Too Large!
+      </div>
+      <div className="text-xs text-red-800 space-y-1">
+        <div>Model: {modelSize.x.toFixed(1)}×{modelSize.y.toFixed(1)}×{modelSize.z.toFixed(1)}mm</div>
+        <div>Build: {buildVolume.x}×{buildVolume.y}×{buildVolume.z}mm</div>
+        <div className="font-semibold mt-2">
+          Recommended scale: {Math.floor(scale * 100)}%
+        </div>
+        {oversized.x && <div>• X-axis exceeds by {(modelSize.x - buildVolume.x).toFixed(1)}mm</div>}
+        {oversized.y && <div>• Y-axis exceeds by {(modelSize.y - buildVolume.y).toFixed(1)}mm</div>}
+        {oversized.z && <div>• Z-axis exceeds by {(modelSize.z - buildVolume.z).toFixed(1)}mm</div>}
+      </div>
     </div>
   );
 }
@@ -332,7 +540,7 @@ function SelectField({ label, value, onChange, options }) {
       <select
         value={value}
         onChange={onChange}
-        className="input-field"
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bambu-primary focus:border-transparent"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
