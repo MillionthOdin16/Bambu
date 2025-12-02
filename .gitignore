@@ -1,8 +1,8 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
+# Build output (only in bambu-web-app)
+bambu-web-app/dist/
 
 # Logs
 *.log

@@ -3,11 +3,10 @@
 nixPkgs = ["nodejs_20", "npm"]
 
 [phases.install]
-cmds = ["npm install", "cd bambu-web-app && npm ci"]
+cmds = ["npm install"]
 
 [phases.build]
-cmds = ["cd bambu-web-app && npm run build"]
+cmds = ["npm run build"]
 
 [start]
 cmd = "npm start"
-

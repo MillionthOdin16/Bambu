@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "install": "cd bambu-web-app && npm ci",
+    "postinstall": "cd bambu-web-app && npm ci",
     "build": "cd bambu-web-app && npm run build",
-    "start": "npx serve bambu-web-app/dist -s -l 3000",
+    "start": "serve bambu-web-app/dist -s -l 3000",
     "dev": "cd bambu-web-app && npm run dev"
   },
   "dependencies": {
