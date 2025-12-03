@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bambu Web Slicer</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .container { display: flex; flex-direction: column; gap: 20px; }
+        .control-panel { border: 1px solid #ccc; padding: 20px; border-radius: 8px; background: #f9f9f9; }
+        .preview-area { width: 100%; height: 400px; border: 1px solid #ddd; background: #eee; position: relative; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input[type="file"], input[type="number"] { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { background: #008f5d; color: white; padding: 10px 20px; border: none; cursor: pointer; font-size: 16px; border-radius: 4px; }
+        button:hover { background: #006e47; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #status { margin-top: 10px; font-weight: bold; }
+        #viewer { width: 100%; height: 100%; }
+    </style>
+    <script src="https://unpkg.com/stl-viewer/dist/stl_viewer.min.js"></script>
+</head>
+<body>
+
+    <h1>Bambu Web Slicer (Lite)</h1>
+
+    <div class="container">
+        
+        <div class="control-panel">
+            <div class="form-group">
+                <label for="stlFile">1. Upload STL</label>
+                <input type="file" id="stlFile" accept=".stl">
+            </div>
+
+            <div class="form-group">
+                <label for="printerModel">Printer Model</label>
+                <select id="printerModel">
+                    <option value="x1c">Bambu Lab X1 Carbon / P1P</option>
+                    <option value="a1_mini">Bambu Lab A1 Mini</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="layerHeight">Layer Height (mm)</label>
+                <select id="layerHeight">
+                    <option value="0.08">0.08 (Extra Fine)</option>
+                    <option value="0.12">0.12 (Fine)</option>
+                    <option value="0.16">0.16 (Optimal)</option>
+                    <option value="0.20" selected>0.20 (Standard)</option>
+                    <option value="0.24">0.24 (Draft)</option>
+                    <option value="0.28">0.28 (Extra Draft)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="infillDensity">Infill Density (%)</label>
+                <input type="number" id="infillDensity" value="15" min="0" max="100">
+            </div>
+
+            <div class="form-group">
+                <label for="filamentType">Filament Type</label>
+                <select id="filamentType">
+                    <option value="PLA" selected>PLA</option>
+                    <option value="PETG">PETG</option>
+                    <option value="ABS">ABS</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="supportEnable"> Enable Supports
+                </label>
+            </div>
+
+            <button id="sliceBtn" disabled>Slice & Generate G-code</button>
+            <div id="status"></div>
+            <div id="downloadArea"></div>
+        </div>
+
+        <div class="preview-area">
+            <div id="viewer"></div>
+        </div>
+
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
